@@ -1111,7 +1111,8 @@ void QvisVolumePlotWindow::UpdateSamplingGroup()
         break;
 #endif
 
-#ifdef VISIT_OSPRAY
+#ifdef VISIT_ANARI
+    #ifdef VISIT_OSPRAY2
     case VolumeAttributes::RayCastingOSPRay:
         osprayGroup->setVisible(true);
         osprayGroup->setEnabled(true);
@@ -1131,6 +1132,7 @@ void QvisVolumePlotWindow::UpdateSamplingGroup()
         lowGradientGroup->setVisible(false);
         UpdateLowGradientGroup(false);
         break;
+    #endif
 #endif
 
     default:
@@ -1172,8 +1174,10 @@ QvisVolumePlotWindow::CreateRendererOptionsGroup(int maxWidth)
 #ifdef VISIT_SLIVR
     rendererTypesComboBox->addItem(tr("Ray casting: SLIVR"));
 #endif
-#ifdef VISIT_OSPRAY
-    rendererTypesComboBox->addItem(tr("Ray casting: OSPRay"));
+#ifdef VISIT_ANARI
+#ifdef VISIT_OSPRAY2
+    rendererTypesComboBox->addItem(tr("ANARI: OSPRay"));
+#endif
 #endif
     connect(rendererTypesComboBox, SIGNAL(activated(int)),
             this, SLOT(rendererTypeChanged(int)));
@@ -1875,11 +1879,13 @@ QvisVolumePlotWindow::UpdateWindow(bool doAll)
                 rendererTypesComboBox->setCurrentIndex(3);
             }
 #endif
-#ifdef VISIT_OSPRAY
+#ifdef VISIT_ANARI
+#ifdef VISIT_OSPRAY2
             else if (volumeAtts->GetRendererType() == VolumeAttributes::RayCastingOSPRay)
             {
                 rendererTypesComboBox->setCurrentIndex(4);
             }
+#endif
 #endif
 
             opacityVariable->setEnabled(true);
@@ -3597,10 +3603,12 @@ QvisVolumePlotWindow::rendererTypeChanged(int val)
         volumeAtts->SetRendererType(VolumeAttributes::RayCastingSLIVR);
         break;
 #endif
-#ifdef VISIT_OSPRAY
+#ifdef VISIT_ANARI
+#ifdef VISIT_OSPRAY2
       case 4:
         volumeAtts->SetRendererType(VolumeAttributes::RayCastingOSPRay);
         break;
+#endif
 #endif
       default:
         EXCEPTION1(ImproperUseException,

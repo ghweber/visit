@@ -504,9 +504,7 @@ avtSLIVRRayTracer::Execute()
         vtkImageData *img = avtImageRepresentation::NewImage(screen[0], screen[1]);
         whole_image->GetImage() = img;
 
-        unsigned char *imgFinal = NULL;
-        imgFinal = new unsigned char[screen[0] * screen[1] * 3];
-        imgFinal = whole_image->GetImage().GetRGBBuffer();
+        unsigned char *imgFinal = whole_image->GetImage().GetRGBBuffer();
 
 
         //
@@ -731,10 +729,7 @@ avtSLIVRRayTracer::Execute()
         vtkImageData *img = avtImageRepresentation::NewImage(screen[0], screen[1]);
         whole_image->GetImage() = img;
 
-        unsigned char *imgFinal = NULL;
-        imgFinal = new unsigned char[screen[0] * screen[1] * 3]();
-        imgFinal = whole_image->GetImage().GetRGBBuffer();
-
+        unsigned char *imgFinal = whole_image->GetImage().GetRGBBuffer();
 
         //
         // Blend in with bounding box and other visit plots

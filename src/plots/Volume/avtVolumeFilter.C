@@ -44,11 +44,11 @@
 #include <avtSLIVRRayTracer.h>
 #endif
 
-#ifdef VISIT_OSPRAY
-# define VISIT_OSPRAY_CONTEXT_ONLY /*dont have to include helper funcitons*/
-# include <avtOSPRayCommon.h>
-# undef VISIT_OSPRAY_CONTEXT_ONLY
-# include <avtOSPRayRayTracer.h>
+#ifdef VISIT_ANARI
+    #include <avtANARIRenderer.h>
+    #ifdef VISIT_OSPRAY2
+        #include <avtANARIOSPRayDevice.h>
+    #endif
 #endif
 
 //
@@ -75,9 +75,6 @@ static void CreateViewInfoFromViewAttributes(avtViewInfo &,
 avtVolumeFilter::avtVolumeFilter()
 {
     primaryVariable = NULL;
-#ifdef VISIT_OSPRAY
-    ospray = NULL;
-#endif
 }
 
 
@@ -101,11 +98,6 @@ avtVolumeFilter::~avtVolumeFilter()
         delete [] primaryVariable;
         primaryVariable = NULL;
     }
-#ifdef VISIT_OSPRAY
-    if (ospray != NULL) {
-      delete (OSPVisItContext*)ospray;
-    }
-#endif
 }
 
 
@@ -284,7 +276,7 @@ avtVolumeFilter::CreateOpacityMap(double range[2])
     else
 #endif
     {
-#ifdef VISIT_OSPRAY
+#ifdef VISIT_ANARI
     if (atts.GetRendererType() == VolumeAttributes::RayCastingOSPRay)
     {
         om.SetTable(vtf, 256, atts.GetOpacityAttenuation() * 2.0 - 1.0, 
@@ -373,7 +365,7 @@ avtVolumeFilter::CreateOpacityMap(double range[2])
 extern bool GetLogicalBounds(avtDataObject_p input,
                              int &width,int &height, int &depth);
 
-#if defined(VISIT_SLIVR) || defined(VISIT_OSPRAY)
+#if defined(VISIT_SLIVR) || defined(VISIT_ANARI)
 
 // ****************************************************************************
 //  Method: avtVolumeFilter::RenderImageRayCasting
@@ -411,12 +403,19 @@ avtVolumeFilter::RenderImageRayCasting(avtImage_p opaque_image,
     else
 #endif
     {
-#ifdef VISIT_OSPRAY
+#ifdef VISIT_ANARI
     if (atts.GetRendererType() == VolumeAttributes::RayCastingOSPRay) {
-        software = new avtOSPRayRayTracer;
-        if (ospray == NULL) { ospray = new OSPVisItContext; }
-        ((avtOSPRayRayTracer*)software)->SetOSPRay
-                                           ((OSPVisItContext*)ospray);
+        avtANARIRenderer::SetDeviceType(DeviceType::OSPRAY);
+        avtANARIDevice *anariDevice = avtANARIRenderer::GetDevice();
+
+        if(anariDevice != nullptr) 
+        {
+            software = dynamic_cast<avtANARIOSPRayDevice *>(anariDevice);
+        }
+        else
+        {
+            EXCEPTION1(VisItException, "[ANARI] Device type not set or set to unknown.");
+        }
     }
 #endif
     }
@@ -589,25 +588,27 @@ avtVolumeFilter::RenderImageRayCasting(avtImage_p opaque_image,
     } else
 #endif
     {
-#ifdef VISIT_OSPRAY
-    if (atts.GetRendererType() == VolumeAttributes::RayCastingOSPRay) {
-      avtOSPRayRayTracer* s = (avtOSPRayRayTracer*)software;
-      s->SetActiveVariable(primaryVariable);
-      s->SetLightInfo(window.GetLights());
-      s->SetMatProperties(materialPropArray);
-      s->SetViewDirection(viewDirection);
-      s->SetLighting(atts.GetLightingFlag());
-      s->SetSamplingRate(atts.GetRendererSamples());
-      s->SetShadowsEnabled(atts.GetOsprayShadowsEnabledFlag());
-      s->SetUseGridAccelerator(atts.GetOsprayUseGridAcceleratorFlag());
-      s->SetPreIntegration(atts.GetOsprayPreIntegrationFlag());
-      s->SetSingleShade(atts.GetOspraySingleShadeFlag());
-      s->SetOneSidedLighting(atts.GetOsprayOneSidedLightingFlag());
-      s->SetAoTransparencyEnabled(atts.GetOsprayAoTransparencyEnabledFlag());
-      s->SetSpp(atts.GetOspraySpp());
-      s->SetAoSamples(atts.GetOsprayAoSamples());
-      s->SetAoDistance(atts.GetOsprayAoDistance());
-      s->SetMinContribution(atts.GetOsprayMinContribution());
+#ifdef VISIT_ANARI
+    if (atts.GetRendererType() == VolumeAttributes::RayCastingOSPRay) 
+    {
+      avtANARIOSPRayDevice *anariOSPRayDevice = dynamic_cast<avtANARIOSPRayDevice *>(software);
+      anariOSPRayDevice->SetRenderingType(DataType::VOLUME);
+      anariOSPRayDevice->SetActiveVariable(primaryVariable);
+      anariOSPRayDevice->SetLightInfo(window.GetLights());
+      anariOSPRayDevice->SetMatProperties(materialPropArray);
+      anariOSPRayDevice->SetViewDirection(viewDirection);
+      anariOSPRayDevice->SetLighting(atts.GetLightingFlag());
+      anariOSPRayDevice->SetSamplingRate(atts.GetRendererSamples());
+      anariOSPRayDevice->SetShadowsEnabled(atts.GetOsprayShadowsEnabledFlag());
+      anariOSPRayDevice->SetUseGridAccelerator(atts.GetOsprayUseGridAcceleratorFlag());
+      anariOSPRayDevice->SetPreIntegration(atts.GetOsprayPreIntegrationFlag());
+      anariOSPRayDevice->SetSingleShade(atts.GetOspraySingleShadeFlag());
+      anariOSPRayDevice->SetOneSidedLighting(atts.GetOsprayOneSidedLightingFlag());
+      anariOSPRayDevice->SetAoTransparencyEnabled(atts.GetOsprayAoTransparencyEnabledFlag());
+      anariOSPRayDevice->SetSamplesPerPixel(atts.GetOspraySpp());
+      anariOSPRayDevice->SetAoSamples(atts.GetOsprayAoSamples());
+      anariOSPRayDevice->SetAoDistance(static_cast<float>(atts.GetOsprayAoDistance()));
+      anariOSPRayDevice->SetMinContribution(static_cast<float>(atts.GetOsprayMinContribution()));
     }
 #endif
     }
@@ -629,7 +630,12 @@ avtVolumeFilter::RenderImageRayCasting(avtImage_p opaque_image,
     //
     // Free up some memory and clean up.
     //
-    delete software;
+    #ifdef VISIT_ANARI
+        avtANARIRenderer::SetDeviceType(DeviceType::NONE);
+    #else
+        delete software;
+    #endif
+
     avtRay::SetArbitrator(NULL);
     delete compositeRF;
 
@@ -759,7 +765,7 @@ avtImage_p
 avtVolumeFilter::RenderImage(avtImage_p opaque_image,
                              const WindowAttributes &window)
 {
-#if defined(VISIT_SLIVR) || defined(VISIT_OSPRAY)
+#if defined(VISIT_SLIVR) || defined(VISIT_ANARI)
     if (atts.GetRendererType() == VolumeAttributes::RayCastingSLIVR ||
         atts.GetRendererType() == VolumeAttributes::RayCastingOSPRay){
         return RenderImageRayCasting(opaque_image,window);

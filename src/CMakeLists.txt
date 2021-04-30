@@ -736,6 +736,8 @@ SET(CXX_TEST_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 OPTION(VISIT_PARALLEL "Build VisIt's parallel compute engine." OFF)
 OPTION(VISIT_SLIVR    "Build VisIt with support for the SLIVR volume rendering library." ON)
 OPTION(VISIT_OSPRAY   "Build VisIt with support for the OSPRay volume rendering library." OFF)
+OPTION(VISIT_OSPRAY2  "Build VisIt with support for Global Illumination and Volume Rendering on the CPU using Intel's OSPRay API." OFF)
+OPTION(VISIT_ANARI    "Build VisIt with support for the ANARI API that provides access to state-of-the-art rendering engines." OFF)
 OPTION(VISIT_STATIC   "Build VisIt statically." OFF)
 IF(VISIT_STATIC)
     ADD_DEFINITIONS(-DVISIT_STATIC)
@@ -903,6 +905,10 @@ VISIT_3RDPARTY_VAR(MOAB_DIR      "Path containing the MOAB library's include and
 VISIT_3RDPARTY_VAR(MOAB_MPI_DIR  "Path containing the parallel MOAB library's include and lib")
 
 VISIT_3RDPARTY_VAR(OSPRAY_DIR    "Path containing the OSPRay library's include and lib")
+VISIT_3RDPARTY_VAR(OSPRAY2_DIR   "Path containing the OSPRay 2 library's include and lib")
+VISIT_3RDPARTY_VAR(ANARI_DIR     "Path containing the ANARI library's include and lib")
+VISIT_3RDPARTY_VAR(RKCOMMON_DIR  "Path containing the RenderKit Common library's include and lib")
+VISIT_3RDPARTY_VAR(OPENVKL_DIR   "Path containing the Open VKL library's include and lib")
 VISIT_3RDPARTY_VAR(EMBREE_DIR    "Path containing the embree library's include and lib")
 VISIT_3RDPARTY_VAR(ISPC_DIR      "Path containing the ISPC library's include and lib")
 # Note by Qi
@@ -1213,6 +1219,8 @@ ENDIF(VISIT_THREAD)
 
 
 include(${VISIT_SOURCE_DIR}/CMake/FindOSPRay.cmake)
+include(${VISIT_SOURCE_DIR}/CMake/FindOSPRay2.cmake)
+include(${VISIT_SOURCE_DIR}/CMake/FindANARI.cmake)
 
 
 #-----------------------------------------------------------------------------

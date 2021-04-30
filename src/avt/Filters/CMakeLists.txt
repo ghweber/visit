@@ -115,18 +115,17 @@ IF(VISIT_SLIVR)
          avtSLIVRImageCompositor.C
          avtSLIVRRayTracer.C
          avtSLIVRSamplePointExtractor.C
-         avtSLIVRVoxelExtractor.C)
+         avtSLIVRVoxelExtractor.C
+         )
     ADD_DEFINITIONS(-DVISIT_SLIVR)
 ENDIF()
 
-IF(VISIT_OSPRAY)
-    LIST(APPEND AVTFILTERS_SOURCES
-         avtOSPRayCommon.C
-         avtOSPRayImageCompositor.C
-         avtOSPRayRayTracer.C
-         avtOSPRaySamplePointExtractor.C
-         avtOSPRayVoxelExtractor.C
-         )
+IF(VISIT_ANARI)
+    LIST(APPEND AVTFILTERS_SOURCES 
+        avtANARIRenderer.C
+        avtANARIOSPRayDevice.C
+        )    
+
     IF(ICET_FOUND)
         # If we have Ice-T then add -DHAVE_ICET to the compilation flags.
         # We need to link with OpenGL on Mac when we have IceT.
@@ -141,8 +140,8 @@ IF(VISIT_OSPRAY)
         # Other setups
         INCLUDE_DIRECTORIES(${ICET_INCLUDE_DIR})
         LINK_DIRECTORIES(${ICET_LIBRARY_DIR})
-        ADD_DEFINITIONS(-DVISIT_OSPRAY_ICET)
-    ENDIF()
+        ADD_DEFINITIONS(-DVISIT_ANARI_ICET)
+    ENDIF(ICET_FOUND)
 ENDIF()
 
 INCLUDE_DIRECTORIES(
@@ -173,33 +172,46 @@ ${VTKM_DIR}/include/vtkm-1.2/vtkm/thirdparty/taotuple
 ${VTK_INCLUDE_DIRS}
 )
 
-if(VISIT_OSPRAY)
-    include_directories(${OSPRAY_INCLUDE_DIR})
-endif()
+IF(VISIT_ANARI)
+    INCLUDE_DIRECTORIES(${ANARI_DIR}/include)
+ENDIF()
 
 # Add link directories
 LINK_DIRECTORIES(${LIBRARY_OUTPUT_DIRECTORY})
 
+#********************************* ANARI *************************************
+# IF(VISIT_ANARI)
+#     ADD_LIBRARY(avtfilters_anari ${ANARI_SOURCES})
+#     TARGET_LINK_LIBRARIES(avtfilters_anari visitcommon anari::anari)
+#     VISIT_INSTALL_TARGETS(avtfilters_anari)
+# ENDIF()
+
 #********************************* SERIAL ************************************
 ADD_LIBRARY(avtfilters_ser ${AVTFILTERS_SOURCES})
-TARGET_LINK_LIBRARIES(avtfilters_ser visitcommon lightweight_visit_vtk visit_vtk avtmath avtview avtpipeline_ser avtdatabase_ser avtdbatts vtkCommonMath vtkCommonTransforms vtkFiltersGeneral vtkFiltersModeling)
-IF(VISIT_OSPRAY) 
-    TARGET_LINK_LIBRARIES(avtfilters_ser ${OSPRAY_LIBRARIES})
+TARGET_LINK_LIBRARIES(avtfilters_ser visitcommon lightweight_visit_vtk visit_vtk avtmath avtview avtpipeline_ser avtdatabase_ser avtdbatts vtkCommonMath vtkCommonTransforms vtkFiltersGeneral vtkFiltersModeling) 
+
+# ANARI
+IF(VISIT_ANARI) 
+    TARGET_LINK_LIBRARIES(avtfilters_ser anari::anari)
     IF(ICET_FOUND)
         TARGET_LINK_LIBRARIES(avtfilters_ser ${ICET_FULLPATH_LIB})
     ENDIF()
-ENDIF() 
+ENDIF()
+
 VISIT_INSTALL_TARGETS(avtfilters_ser)
 
 #********************************* PARALLEL **********************************
 IF(VISIT_PARALLEL)
     ADD_PARALLEL_LIBRARY(avtfilters_par ${AVTFILTERS_SOURCES})
     TARGET_LINK_LIBRARIES(avtfilters_par visitcommon lightweight_visit_vtk visit_vtk avtmath avtview avtpipeline_par avtdatabase_par avtdbatts vtkCommonMath vtkCommonTransforms vtkFiltersGeneral vtkFiltersModeling)
-    IF(VISIT_OSPRAY) 
-        TARGET_LINK_LIBRARIES(avtfilters_par ${OSPRAY_LIBRARIES})
+    
+    # ANARI
+    IF(VISIT_ANARI) 
+        TARGET_LINK_LIBRARIES(avtfilters_par anari::anari)
         IF(ICET_FOUND)
             TARGET_LINK_LIBRARIES(avtfilters_par ${ICET_FULLPATH_LIB})
         ENDIF()
-    ENDIF()
+    ENDIF() 
+
     VISIT_INSTALL_TARGETS(avtfilters_par)
 ENDIF(VISIT_PARALLEL)
